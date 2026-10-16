@@ -19,7 +19,6 @@ jobs:
         run: |
           ditto -x -k TendiesVN-source.zip "$RUNNER_TEMP/tendiesvn"
           sed -i '' 's/lipo -verify_arch arm64 \(.*\)/lipo \1 -verify_arch arm64/' "$RUNNER_TEMP/tendiesvn/TendiesVN/scripts/build-unsigned.sh"
-          sed -i '' 's/allowedContentTypes: \[\.tendiesPackage, \.data\]/allowedContentTypes: [.item]/' "$RUNNER_TEMP/tendiesvn/TendiesVN/Views/ContentView.swift"
           bash "$RUNNER_TEMP/tendiesvn/TendiesVN/scripts/build-unsigned.sh"
 
       - name: Upload IPA
