@@ -11,6 +11,7 @@ jobs:
       - name: Extract source and build
         run: |
           ditto -x -k TendiesVN-source.zip "$RUNNER_TEMP/tendiesvn"
+          sed -i '' 's/lipo -verify_arch arm64 \(.*\)/lipo \1 -verify_arch arm64/' "$RUNNER_TEMP/tendiesvn/TendiesVN/scripts/build-unsigned.sh"
           bash "$RUNNER_TEMP/tendiesvn/TendiesVN/scripts/build-unsigned.sh"
       - uses: actions/upload-artifact@v4
         with:
