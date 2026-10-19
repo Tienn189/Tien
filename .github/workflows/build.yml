@@ -1,27 +1,21 @@
 name: Build IPA from ZIP
-
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 permissions:
   contents: read
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 30
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Extract source and build
         run: |
           ditto -x -k TendiesVN-source.zip "$RUNNER_TEMP/tendiesvn"
           bash "$RUNNER_TEMP/tendiesvn/TendiesVN/scripts/build-unsigned.sh"
-
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: TendiesVN-unsigned
           path: ${{ runner.temp }}/tendiesvn/TendiesVN/build/TendiesVN-unsigned.ipa
