@@ -1,0 +1,35 @@
+name: Build IPA from ZIP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 25
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Extract source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -q TendiesUnlock-iOS-source.zip -d extracted
+          test -f extracted/tendies-ios/TendiesDecryptor.xcodeproj/project.pbxproj
+
+      - name: Build unsigned IPA
+        working-directory: extracted/tendies-ios
+        run: bash scripts/build-ipa.sh
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: TendiesUnlock-unsigned-IPA
+          path: extracted/tendies-ios/build/TendiesUnlock-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
