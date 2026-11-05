@@ -1,0 +1,82 @@
+name: Build IPA from ZIP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.app }}
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: TendiesUnlock
+            zip: TendiesUnlock-iOS-source.zip
+            folder: tendies-ios
+            script: scripts/build-ipa.sh
+            ipa: TendiesUnlock-unsigned.ipa
+
+          - app: TendiesVN
+            zip: TendiesVN-source.zip
+            folder: TendiesVN
+            script: scripts/build-unsigned.sh
+            ipa: 1809-unsigned.ipa
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract source ZIP
+        id: source
+        env:
+          SOURCE_ZIP: ${{ matrix.zip }}
+          SOURCE_FOLDER: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! -f "$SOURCE_ZIP" ]]; then
+            echo "::notice::Khong co $SOURCE_ZIP, bo qua app nay."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          unzip -q "$SOURCE_ZIP" -d extracted
+          test -d "extracted/$SOURCE_FOLDER"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Select Xcode 26 for TendiesVN
+        if: steps.source.outputs.found == 'true' && matrix.app == 'TendiesVN'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          XCODE_APP="$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' -print | sort | tail -n 1)"
+
+          if [[ -z "$XCODE_APP" ]]; then
+            echo "::error::Runner khong co Xcode 26."
+            exit 1
+          fi
+
+          echo "DEVELOPER_DIR=$XCODE_APP/Contents/Developer" >> "$GITHUB_ENV"
+
+      - name: Build unsigned IPA
+        if: steps.source.outputs.found == 'true'
+        working-directory: extracted/${{ matrix.folder }}
+        env:
+          BUILD_SCRIPT: ${{ matrix.script }}
+        run: bash "$BUILD_SCRIPT"
+
+      - name: Upload IPA
+        if: steps.source.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-unsigned-IPA
+          path: extracted/${{ matrix.folder }}/build/${{ matrix.ipa }}
+          if-no-files-found: error
+          retention-days: 7
