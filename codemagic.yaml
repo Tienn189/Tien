@@ -1,0 +1,51 @@
+workflows:
+  tendies-unlock:
+    name: Tendies Unlock - IPA chua ky
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      xcode: "26.3"
+    scripts:
+      - name: Giai nen source
+        script: |
+          set -euo pipefail
+          unzip -q TendiesUnlock-iOS-source.zip -d extracted
+          test -f extracted/tendies-ios/scripts/build-ipa.sh
+      - name: Build IPA
+        script: |
+          set -euo pipefail
+          cd extracted/tendies-ios
+          bash scripts/build-ipa.sh
+      - name: Dong goi IPA de tai ve tren iPhone
+        script: |
+          set -euo pipefail
+          cd extracted/tendies-ios/build
+          zip -j TendiesUnlock-download.zip TendiesUnlock-unsigned.ipa
+    artifacts:
+      - extracted/tendies-ios/build/TendiesUnlock-download.zip
+
+  tendies-vn:
+    name: TendiesVN - IPA chua ky
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      xcode: "26.3"
+    scripts:
+      - name: Giai nen source
+        script: |
+          set -euo pipefail
+          unzip -q TendiesVN-source.zip -d extracted
+          test -f extracted/TendiesVN/scripts/build-unsigned.sh
+      - name: Build IPA
+        script: |
+          set -euo pipefail
+          cd extracted/TendiesVN
+          bash scripts/build-unsigned.sh
+      - name: Dong goi IPA de tai ve tren iPhone
+        script: |
+          set -euo pipefail
+          cd extracted/TendiesVN/build
+          zip -j TendiesVN-download.zip 1809-unsigned.ipa
+    artifacts:
+      - extracted/TendiesVN/build/TendiesVN-download.zip
+      - extracted/TendiesVN/build/xcodebuild.log
